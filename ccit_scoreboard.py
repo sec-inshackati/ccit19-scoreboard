@@ -62,9 +62,9 @@ def format_scoreboard_0():
 def get_scoreboard_json(url):
     try:
         return json.loads(requests.get(url, auth=HTTPBasicAuth(AUTH_CREDS['email'], AUTH_CREDS['password'])).text)
-    except :
-        print("cred.json is not correctly formatted!")
-        return
+    except Exception as e:
+        print("cred.json is not correctly formatted! [" + str(e) + "]" )
+        return 0
 
 ############################################################################################
 
@@ -76,16 +76,24 @@ def main():
     if(CTF_SCOREBOARD_URL == ''):
         print('Enter the scoreboard url: ', end='' )
         CTF_SCOREBOARD_URL = input()
-
     try:
-        AUTH_CREDS = json.load(open("cred.json"))
-        SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL))
-        while(True):
-            SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL))
-            print(format_scoreboard_0())
-            time.sleep(3)
+        AUTH_CREDS = json.load(open("cred.json", 'r'))
     except OSError:
-        print('cred.json is missing')
+        print('cred.json was not found! insert your credentials to continue:')
+        print('email: ', end='')
+        email = input()
+        print('password: ', end='')
+        password = input()
+        f = open("cred.json", 'w+')
+        f.write('{"email": "' + email + '", "password": "' + password + '"}')
+        print('File cred.json created!')
+
+
+    SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL))
+    while(True):
+        SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL))
+        print(format_scoreboard_0())
+        time.sleep(3)
 
 ############################################################################################
 
