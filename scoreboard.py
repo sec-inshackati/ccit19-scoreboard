@@ -3,8 +3,9 @@ import curses
 import os
 import time
 import json
-from moduels.Classes import CtfScoreboard
-from moduels import ConsoleColors
+
+from ctfmodules.ctfclasses import CtfScoreboard
+from ctfmodules.ctfclasses import ConsoleColors
 from requests.auth import HTTPBasicAuth
 
 ############################################################################################
@@ -17,10 +18,9 @@ clear = lambda: os.system('clear')
 
 CTF_SCOREBOARD_URL = 'https://finalsim.cyberchallenge.it/ctf_scoreboard'
 SCOREBOARD = ''
-AUTH_CREDS = ''
 QUIT = False
 
-stdscr = curses.initscr()
+#stdscr = curses.initscr()
 
 ############################################################################################
 
@@ -62,17 +62,18 @@ def format_scoreboard_0():
         board += '\n'
     return board
 
-def get_scoreboard_json(url):
+def get_scoreboard_json(url, creds):
     try:
-        return json.loads(requests.get(url, auth=HTTPBasicAuth(AUTH_CREDS['email'], AUTH_CREDS['password'])).text)
+        return json.loads(requests.get(url, auth=HTTPBasicAuth(creds['email'], creds['password'])).text)
     except Exception as e:
         print("cred.json is not correctly formatted! [" + str(e) + "]" )
-        return 0
+        quit()
 
 def log_in():
+    creds = ''
     while(True):
         try:
-            _AUTH_CREDS = json.load(open("cred.json", 'r'))
+            creds = json.load(open("cred.json", 'r'))
             break
         except OSError:
             print('cred.json was not found! insert your credentials to continue:')
@@ -83,7 +84,7 @@ def log_in():
             f = open("cred.json", 'w+')
             f.write('{"email": "' + email + '", "password": "' + password + '"}')
             print('File cred.json created!')
-    return _AUTH_CREDS
+    return creds
 
 def log_out():
     os.remove('cred.json')
@@ -91,7 +92,6 @@ def log_out():
 ############################################################################################
 
 def main():
-    global AUTH_CREDS
     global SCOREBOARD
     global CTF_SCOREBOARD_URL
     global QUIT
@@ -99,12 +99,9 @@ def main():
     if(CTF_SCOREBOARD_URL == ''):
         print('Enter the scoreboard url: ', end='' )
         CTF_SCOREBOARD_URL = input()
-
-    AUTH_CREDS = log_in()
-    SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL))
-
+    
     while(QUIT is not True):
-        SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL))
+        SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL, log_in()))
         print(format_scoreboard_0())
         time.sleep(3)
 
