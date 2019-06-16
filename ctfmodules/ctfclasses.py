@@ -62,9 +62,9 @@ class CtfScoreboard:
     
     def team_total_sla_percentage(self, teamid):
         percentage = 0
-        for key in self.challenges:
+        for key in self.challenges_names:
             percentage += int(self.scorejson['scores'][teamid]['services'][key]['sla_percentage'])
-        return percentage/len(self.challenges)
+        return percentage/len(self.challenges_names)
     
     def team_challenge_attack_flags(self, teamid, challengekey):
         return self.scorejson['scores'][teamid]['services'][challengekey]['attack_flags']
@@ -89,7 +89,7 @@ class CtfScoreboard:
         for teamid in range(0, len(self.team_names)):
             for key in self.challenges:
                 percentage += int(self.scorejson['scores'][teamid]['services'][key]['sla_percentage'])
-        return percentage/(len(self.team_names)*self.challenges_count)
+        return int(percentage/(len(self.team_names)*self.challenges_count))
     
     def team_challenge_integrity(self, teamid, challengekey):
         return self.scorejson['scores'][teamid]['services'][challengekey]['integrity']
