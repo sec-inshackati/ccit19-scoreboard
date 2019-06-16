@@ -1,2 +1,3 @@
 cred.json
 *.bak
+__pycache__/
