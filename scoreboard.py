@@ -83,6 +83,7 @@ def log_in():
             password = input()
             f = open("cred.json", 'w+')
             f.write('{"email": "' + email + '", "password": "' + password + '"}')
+            f.close()
             print('File cred.json created!')
     return creds
 
