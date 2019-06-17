@@ -63,7 +63,8 @@ def format_scoreboard_0():
         board += '\n'
     return board
 
-def curses_print_scoreboard_0():
+def curses_print_scoreboard_0(): 
+    ##IDEA: inserisci solo un addstr per riga in modo da alleggerire il carico computazionale
     global stdscr
 
     __tab = 10
@@ -198,7 +199,7 @@ def log_out():
     os.remove('cred.json')
 
 def init_window():
-    curses.noecho() #turn off automatic echoing of keys to the screen, in order to be able to read keys and only display them under certain circumstances
+    #curses.noecho() #turn off automatic echoing of keys to the screen, in order to be able to read keys and only display them under certain circumstances
     curses.cbreak() #to react to keys instantly, without requiring the Enter key to be pressed
     stdscr.keypad(True) #Terminals usually return special keys as a multibyte escape sequence: enabling this, those key returns special values such as curses.KEY_LEFT
     stdscr.nodelay(True) #makes user inputs non-blocking
@@ -218,14 +219,24 @@ def end_window():
     curses.echo()
     curses.endwin() #restores the terminal to its original behaviour
 
-def scoreboard_updater(creds):
+def scoreboard_updater():
     global SCOREBOARD
     global QUIT
+    global creds
 
+    last_update = time.time() - 400
     while(QUIT is not True):
-        SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL, creds))
-        time.sleep(30)
+        if(time.time() - last_update >= 30):
+            SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL, creds))
+            last_update = time.time()
+            update_screen(mode=0)
 
+def update_screen(mode=0):
+        stdscr.clear()
+        #if there will be more than just one printing mode
+        if(mode==0):
+            curses_print_scoreboard_0()
+        stdscr.refresh()
 
 ############################################################################################
 
@@ -233,31 +244,35 @@ def main():
     global SCOREBOARD
     global CTF_SCOREBOARD_URL
     global QUIT
+    global updater
+    global creds
 
     if(CTF_SCOREBOARD_URL == ''):
         print('Enter the scoreboard url: ', end='' )
         CTF_SCOREBOARD_URL = input()
 
     creds = log_in()
+
     SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL, creds))
-
+    updater.start()
     init_window()
+
     while(QUIT is not True):
-        if stdscr.getch() == ord(' '):
+        ch = stdscr.getch()
+        if ch == ord(' '):
             SCOREBOARD = CtfScoreboard(get_scoreboard_json(CTF_SCOREBOARD_URL, creds))
-            stdscr.clear()
-            curses_print_scoreboard_0()
-            stdscr.refresh()
-        if stdscr.getch() == ord('q'):
+            update_screen()
+        elif ch == ord('q'):
             QUIT = True
-
-
-    end_window()
 ############################################################################################
 
 if(__name__ == '__main__'):
     try:
+        updater = threading.Thread(target=scoreboard_updater, name='updater_async') 
+        creds = ''
         main()
+        end_window()
+        updater.join()
     except Exception as e:
         end_window()
         print(str(e))
